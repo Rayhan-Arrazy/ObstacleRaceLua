@@ -1,0 +1,65 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Fire Union
+local allFireModels = workspace:GetChildren()
+
+for _, model in pairs(allFireModels) do
+	if model:IsA("Model") and model.Name == "FireModel" then
+		local fireUnions = model:GetChildren()
+
+		for _, part in pairs(fireUnions) do
+			if part:IsA("UnionOperation") and part.Name == "FireUnionSmall" then
+				local fire = Instance.new("Fire")
+				fire.Parent = part
+				fire.Size = 10
+				fire.Heat = 8
+
+				local function onTouch(hit)
+					local character = hit.Parent
+					local humanoid = character:FindFirstChild("Humanoid")
+
+					if humanoid then
+						humanoid.Health = humanoid.Health - 10
+					end
+				end
+
+				part.Touched:Connect(onTouch)
+			end
+		end
+	end
+end
+
+-- Setup RemoteEvent for Timer Updates
+local TimerUpdateEvent = Instance.new("RemoteEvent")
+TimerUpdateEvent.Name = "TimerUpdateEvent"
+TimerUpdateEvent.Parent = ReplicatedStorage
+
+-- Variables
+local startTime = tick()
+local finished = false
+local finishLine = workspace:WaitForChild("FinishLine")
+
+local function startTimer()
+	startTime = tick()
+	finished = false
+	while not finished do
+		local elapsed = tick() - startTime
+		local minutes = math.floor(elapsed / 60)
+		local seconds = math.floor(elapsed % 60)
+		local timerText = string.format("%d:%02d", minutes, seconds)
+
+		TimerUpdateEvent:FireAllClients(timerText)
+
+		wait(1)
+	end
+end
+
+finishLine.Touched:Connect(function(hit)
+	if hit.Parent:FindFirstChild("Humanoid") then
+		finished = true
+	end
+end)
+
+startTimer()
